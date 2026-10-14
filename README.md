@@ -31,6 +31,28 @@ This will compile and Start the web application. Check the Output in a web brows
         
 
 
+### Shopify Order Sync
+Click **Sync Orders** on the dashboard (or open `/order/sync`). The app fetches the orders, saves them in the `orders` table and redirects to the Orders page.
+
+* The orders are fetched from the url in `shopify.orders.url` (application.properties).
+* The test endpoint currently returns 404, so the app falls back to `src/main/resources/sample-orders.json`, which has the same format as the Shopify orders api.
+* Running the sync again does not create duplicates, orders are matched by their Shopify id and updated.
+* The Orders page shows the order number and the customer name. The search box in the top bar filters the rows while typing, by order number, customer name or email, e.g. `1003` or `alice`.
+* **Export** on the Orders page downloads the orders as `orders.csv` (only the searched ones if something is typed in the search).
+* The same orders are available as json at `/api/v1/orders`, `/api/v1/orders?search=alice` returns only the matching ones.
+
+Main classes:
+* `OrderController` / `OrderApiController` - web page and json api
+* `OrderService` - fetch, save and search logic
+* `OrderRepository` - database access (Spring Data JPA)
+* `Order` - the database table, `ShopifyOrder` - the Shopify json
+
+Note: Spring Boot 2.2 needs Java 8 or 11 to run.
+
+### Tests
+The tests use an in-memory H2 database and the sample json, MySQL is not needed.
+<pre>./mvnw test</pre>
+
 ### Reference Documentation
 For further reference, please consider the following sections:
 

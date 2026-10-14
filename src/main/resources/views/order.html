@@ -32,7 +32,7 @@
                 <div class="btn-toolbar mb-2 mb-md-0">
                     <div class="btn-group mr-2">
                         <button class="btn btn-sm btn-outline-secondary">Share</button>
-                        <button class="btn btn-sm btn-outline-secondary">Export</button>
+                        <a id="exportLink" href="/order/export" class="btn btn-sm btn-outline-secondary">Export</a>
                     </div>
                     <button class="btn btn-sm btn-outline-secondary dropdown-toggle">
                         This week
@@ -53,6 +53,23 @@
                     </tr>
                     </thead>
                     <tbody>
+                    <!-- "orders" is added to the model in OrderController.index() -->
+                    <!-- data-search holds the text the top search box matches against (email is not shown in the table) -->
+                    <tr th:each="order : ${orders}" class="order-row"
+                        th:attr="data-search=${#strings.toLowerCase(order.name + ' ' + order.customerName + ' ' + order.email)}">
+                        <td th:text="${order.name}"></td>
+                        <td th:text="${order.customerName}"></td>
+                        <td th:text="${order.currency + ' ' + order.totalPrice}"></td>
+                        <td th:text="${order.totalDiscounts}"></td>
+                        <td th:text="${#temporals.format(order.createdAt, 'dd MMM yyyy HH:mm')}"></td>
+                        <td th:text="${#temporals.format(order.processedAt, 'dd MMM yyyy HH:mm')}"></td>
+                    </tr>
+                    <tr th:if="${orders.empty}">
+                        <td colspan="6" class="text-center">No orders yet, click <a href="/order/sync">Sync Orders</a> to import them.</td>
+                    </tr>
+                    <tr id="noMatch" class="d-none">
+                        <td colspan="6" class="text-center">No orders match your search.</td>
+                    </tr>
                     </tbody>
                 </table>
             </div>
@@ -61,6 +78,33 @@
 </div>
 
 <foot th:replace="fragments/foot :: foot"></foot>
+
+<script>
+    // filters the table with the search box in the top bar (nav.html), runs on every key press
+    var searchBox = document.getElementById('orderSearch');
+    var rows = document.querySelectorAll('.order-row');
+
+    function filterOrders() {
+        var text = searchBox.value.trim().toLowerCase();
+        var visible = 0;
+
+        rows.forEach(function (row) {
+            var match = row.getAttribute('data-search').indexOf(text) !== -1;
+            row.style.display = match ? '' : 'none';
+            if (match) {
+                visible++;
+            }
+        });
+
+        document.getElementById('noMatch').classList.toggle('d-none', visible > 0 || rows.length === 0);
+
+        // Export downloads the same orders that are visible
+        document.getElementById('exportLink').href = '/order/export' + (text ? '?search=' + encodeURIComponent(text) : '');
+    }
+
+    searchBox.addEventListener('input', filterOrders);
+    filterOrders();  // for links like /order?search=alice
+</script>
 <!--<footer th:replace="fragments/footer :: footer"></footer>-->
 
 </body>
